@@ -1,0 +1,16 @@
+<phpunit bootstrap="vendor/autoload.php"
+         executionOrder="random"
+         resolveDependencies="true">
+    <testsuites>
+        <testsuite name="Path Traversal Tests">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+    <include>
+      <directory suffix=".php">src</directory>
+      <!-- kalau project Anda bukan src, ganti sesuai struktur -->
+      <!-- contoh: <directory suffix=".php">app</directory> -->
+    </include>
+  </source>
+</phpunit>

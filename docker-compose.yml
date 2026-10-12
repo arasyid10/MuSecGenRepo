@@ -1,0 +1,22 @@
+services:
+  app:
+    container_name: traversal-vulnerabilities
+    build: .
+    command: tail -F /dev/null
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./build:/app/build
+    environment:
+      - XDEBUG_MODE=coverage,debug
+      - TZ=Asia/Jakarta
+    networks:
+      - vuln-app
+
+networks:
+  vuln-app:
+
+volumes:
+  logs:

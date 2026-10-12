@@ -1,0 +1,36 @@
+{
+  "constant_basepath": "__DIR__",
+
+  "targets": {
+    "copy": [0, 1],
+    "rename": [0, 1],
+    "fopen": [0],
+    "file_get_contents": [0],
+    "file_put_contents": [0],
+    "unlink": [0],
+    "readfile": [0],
+    "require": [0],
+    "require_once": [0],
+    "include": [0],
+    "include_once": [0],
+    "move_uploaded_file": [1]
+  },
+
+  "payloads": [
+    
+    { "name": "win-abs-file", "type": "literal",
+      "value": "C:\\xampp\\htdocs\\samplecode\\MyProject\\File.txt" },
+
+    { "name": "dir-up-config-3", "type": "concat",
+      "const": "__DIR__", "suffix": "\\..\\..\\..\\config.ini" },
+
+    { "name": "dir-up-files-4", "type": "concat",
+      "const": "__DIR__", "suffix": "\\..\\..\\..\\..\\files.txt" },
+
+    { "name": "dir-legit", "type": "concat",
+      "const": "__DIR__", "suffix": "\\legit.txt" }
+
+    
+    
+  ]
+}

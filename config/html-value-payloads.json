@@ -1,0 +1,11 @@
+{
+  "tokens": [
+    "123456", "password", "qwerty", "admin", "guest", "test",
+    "abc123", "111111", "000000", "letmein", "welcome", "iloveyou",
+    "token", "csrf", "phpsessid", "session", "user", "login",
+    "root", "default", "changeme", "passw0rd", "secret", "monkey",
+    "dragon", "cookie_phpsessid", "sessionid", "csrf_token",
+    "xsrf_token", "auth_token", "access_token", "refresh_token"
+  ],
+  "limit": 100
+}

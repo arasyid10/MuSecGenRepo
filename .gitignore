@@ -1,0 +1,5 @@
+build/
+logs/
+vendor/
+tests/Generated/
+prompts/*.local.md
