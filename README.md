@@ -1,109 +1,199 @@
-# 🛡️ Path Traversal & Authorization Bypass Vulnerability Simulation
+﻿# 🛡️ Traversal Vulnerabilities and Mutation Testing Sandbox
 
-This dummy PHP project is designed to **simulate and test real-world file access vulnerabilities**, specifically:
+This project is a PHP security testbed designed to simulate several realistic weaknesses in web applications, especially around:
 
-- 🔓 **Directory & Path Traversal (CWE-22 to CWE-36)**
-- 🧑‍💻 **Authorization Bypass via Predictable IDs (CWE-639)**
-- ✅ PHPUnit tests all pass (expected behavior)
-- 🧪 Infection detects **surviving mutants** due to intentionally weak validation logic
+- 🔓 Path traversal and directory escape vulnerabilities (CWE-22 to CWE-36)
+- 🧑‍💻 Authorization bypass caused by predictable identifiers (CWE-639)
+- 🧪 Mutation testing using Infection to evaluate whether protective checks survive typical code mutations
+- 🔐 CSRF token validation and anti-CSRF guard logic
 
-The project is useful for:
+The repository is useful for:
 
-- Security researchers
-- QA testers
-- Students studying web security
-- Test case mutation testers
+- Security research and demonstration
+- Classroom training in web application security
+- Mutation testing experiments
+- Evaluating the effectiveness of sanitization and validation logic
+- Testing whether protective checks remain robust under code mutation
 
 ---
 
-## 🧱 Project Structure
-```
-traversal-vulnerabilities/
+## 🎯 Project objectives
+
+This project intentionally includes vulnerable patterns and defensive test cases so that researchers can study how weaknesses manifest and how mutation testing exposes fragile code.
+
+It combines three major themes:
+
+1. Path traversal exploitation scenarios
+2. Authorization bypass via predictable user identifiers
+3. CSRF validation logic and token handling under mutation pressure
+
+---
+
+## 🧱 Project structure
+
+```text
+traversal-vulnerabilities-main/
 ├── src/
-│ ├── VulnFileRead.php # Path traversal simulation
-│ └── UserProfileRead.php # Auth bypass simulation
-├── tests/ # PHPUnit test cases (CWE-specific)
-│ └── CweXX<...>Test.php # Individual CWE test cases
-├── vulnerable_files/ # Target files for test access
-│ ├── etc/ # Simulated /etc/passwd
-│ ├── secret_dir/ # Simulated sensitive content
-│ ├── safe_dir/ # Legitimate user-accessible files
-│ └── users/ # Simulated user profile directories
-├── patterns.json # Attack patterns used in tests
-├── phpunit.xml.dist # PHPUnit configuration
-├── infection.json.dist # Infection mutation config
-└── composer.json # Autoload & dependencies
+│   ├── VulnFileRead.php              # Path traversal simulation
+│   ├── UserProfileRead.php           # Authorization bypass scenario
+│   ├── dwacsrf.php                  # CSRF-related logic examples
+│   ├── dvwaipl.php                  # Security logic / input validation helpers
+│   ├── mutillidaeCSRFTokenHandler.php # CSRF token handler mock-up
+│   ├── EncodingHandler.php          # Encoding/normalization logic used in traversal tests
+│   └── Mutator/                     # Mutation operator implementations
+│       ├── Html/
+│       ├── Security/
+│       └── ...
+├── tests/
+│   ├── Cwe22PathTraversalTests.php
+│   ├── Cwe22IPLChainTests.php
+│   ├── Cwe639AuthorizationBypassTest_.php
+│   ├── CSRFChainTests.php
+│   ├── CSRFFewTests.php
+│   ├── CSRFZeroTests.php
+│   ├── MutillidaeCSRFTokenHandlerTests.php
+│   └── ...
+├── config/
+│   ├── path-payloads.json
+│   ├── html-value-payloads.json
+│   └── settings.ini
+├── vulnerable_files/
+│   └── sample sensitive and safe files used by the tests
+├── patterns.json
+├── phpunit.xml
+├── infection.json5
+├── composer.json
+├── composer.lock
+├── Dockerfile
+├── docker-compose.yml
+├── README.md
+├── reports/
+│   └── mutation and coverage reporting artifacts
+└── vendor/
 ```
 
+---
+
+## 🔍 Vulnerability scenarios covered
+
+### 1. Path traversal and file access violations
+
+`src/VulnFileRead.php` demonstrates how unsafe file path handling may allow users to escape a restricted directory using values such as:
+
+- `../`
+- `..\\`
+- encoded traversal payloads
+- null-byte variants
+- multi-level traversal paths
+- mixed separators and normalization tricks
+
+This covers CWE-22 and related traversal weaknesses such as CWE-23 to CWE-36.
+
+### 2. Authorization bypass via predictable IDs
+
+`src/UserProfileRead.php` simulates access to user-specific resources using predictable identifiers. If the application trusts a user-supplied ID without validating ownership or authorization, an attacker may access records outside their scope.
+
+This aligns with:
+
+- CWE-639: Authorization Bypass Through User-Controlled Key
+
+### 3. Mutation operator testing
+
+The project includes a dedicated mutation area under `src/Mutator/` and related reports under `reports/`. These mutation operators simulate code changes that may break or weaken validation logic, such as:
+
+- replacing string checks with weaker comparisons
+- mutating filtering logic
+- modifying path payload operators
+- altering HTML value handling
+- changing security-related comparisons or conditional checks
+
+This is useful for observing whether tests actually catch weak or mutated logic, which is the core purpose of mutation testing with Infection.
+
+### 4. CSRF validation and security checks
+
+This project also includes explicit Cross-Site Request Forgery (CSRF) testing. CSRF is a web vulnerability where an attacker tricks a logged-in user into submitting a malicious request that the application accepts as valid.
+
+The repository contains dedicated CSRF-focused test suites, including:
+
+- `CSRFChainTests.php`
+- `CSRFFewTests.php`
+- `CSRFZeroTests.php`
+- `CSRFChainMCPTests.php`
+- `MutillidaeCSRFTokenHandlerTests.php`
+- `DvwaCsrfTokenTests.php`
+- `src/dwacsrf.php`
+- `src/mutillidaeCSRFTokenHandler.php`
+
+These tests evaluate important CSRF protections such as:
+
+- generation of CSRF tokens in HTML forms
+- validation of token values before accepting requests
+- comparison that is case-sensitive and length-sensitive
+- rejection of tampered, invalid, or mismatched tokens
+- uniqueness and randomness of generated tokens
+- hidden input naming conventions such as `token-csrf`
+- secure handling of session-based token verification
+
+This project therefore covers both file traversal weaknesses and CSRF protection logic in a single security testing benchmark.
 
 ---
 
-## 🔍 Vulnerability Simulation Explanation
+## 🧪 Test categories
 
-### `src/VulnFileRead.php`
+The repository includes numerous PHPUnit test groups, including:
 
-- Core vulnerable logic using `realpath()` and `str_starts_with()`
-- Doesn't sanitize or normalize input paths
-- Allows traversal via obfuscation or encoding
-- ❗Allows Infection to mutate path checks without failing tests
-
-### `src/UserProfileRead.php`
-
-- Simulates user profile file access by `user_id`
-- No ownership validation — predictable ID = access to any user
-- Covers **CWE-639** (Authorization Bypass)
+| Category | Focus |
+|---|---|
+| CWE-22 / Path Traversal | Escaping the base directory using encoded or normalized payloads |
+| CWE-639 | Accessing unauthorized resources via predictable IDs |
+| CSRF | Hidden-token generation, validation, and strict comparison |
+| Mutation testing | Checking whether mutants survive or are killed by tests |
+| Security chain testing | Combined logic checks for multi-step exploit chains |
 
 ---
 
-## 🧪 Test Cases Breakdown (by CWE)
+## ✅ How to run
 
-Each test file maps directly to a **CWE (Common Weakness Enumeration)** ID and simulates attack vectors found in real systems.
-
-| CWE ID | Name                                 | Description |
-|--------|--------------------------------------|-------------|
-| CWE-23 | Relative Path Traversal              | `../../` or `..\\..\\` to escape base dir |
-| CWE-24 | Traversal to Specific Directory      | Accessing `../admin`, `../config` |
-| CWE-25 | Absolute Path Access                 | Access `/etc/passwd` or `C:\Windows\...` |
-| CWE-26 | Obfuscated Traversal                 | Triple-dot: `.../...//` |
-| CWE-27 | Folder Up One Level                  | Legit path with `/..` |
-| CWE-28 | Double Encoded Traversal             | `%252e%252e%252f` decoded to `../` |
-| CWE-29 | Unicode Traversal                    | Unicode `\u002e` trick |
-| CWE-30 | Null Byte Injection                  | `../../etc/passwd%00.png` bypass |
-| CWE-31 | Mid-Path Traversal                   | E.g. `images/../../admin/...` |
-| CWE-32 | Path Normalization (`dir/..`)        | E.g. `assets/../` |
-| CWE-33 | Double Upward Traversal              | `folder/sub/../../` |
-| CWE-34 | Multi-Level Traversal                | 3+ level traversal |
-| CWE-35 | Extra Dots in Filename               | E.g. `secret.txt...` |
-| CWE-36 | Mixed Slashes Traversal              | Combining `/`, `\`, `\\` |
-| CWE-639| Authorization Bypass via ID          | Predictable ID = access any user |
-
----
-
-## ✅ How to Run
-
-### 1. Install Dependencies
+### Install dependencies
 
 ```bash
 composer install
 ```
 
-### 2. Run PHPUnit
+### Run PHPUnit
 
 ```bash
 vendor/bin/phpunit
 ```
 
-### 3. Run Infection (Mutation Testing)
+### Run mutation testing with Infection
 
 ```bash
 vendor/bin/infection
 ```
 
-⚠️ Infection will detect surviving mutants due to poor validation logic, simulating real-world exploitation potential.
+### Optional: run specific suites
 
+```bash
+vendor/bin/phpunit --filter CSRF
+vendor/bin/phpunit --filter PathTraversal
+vendor/bin/phpunit --filter Authorization
+```
 
-### ⚙️ Requirements
+---
+
+## ⚙️ Requirements
+
 - PHP >= 8.0
 - Composer
-- PHPUnit (via composer)
-- Infection mutation testing (via composer)
+- PHPUnit
+- Infection mutation testing
+- Optional Docker support via `Dockerfile` and `docker-compose.yml`
+
+---
+
+## 📝 Notes
+
+This project is intentionally designed to illustrate security weaknesses in a controlled environment. The vulnerable behavior is not meant to be deployed in production as-is. It is primarily used for learning, experimentation, and security validation through automated tests and mutation analysis.
+
+The combination of traversal bugs, authorization issues, mutation operators, and CSRF validation testing makes it a useful benchmark for understanding how security controls can fail under adversarial input and mutation-based evaluation.
