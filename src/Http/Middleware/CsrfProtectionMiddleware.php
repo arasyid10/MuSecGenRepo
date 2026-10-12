@@ -297,7 +297,7 @@ class CsrfProtectionMiddleware implements MiddlewareInterface
      * @param string $token The CSRF token.
      * @return bool
      */
-    protected function _verifyToken(string $token): bool
+    public function _verifyToken(string $token): bool
     {
         // If we have a hexadecimal value we're in a compatibility mode from before
         // tokens were salted on each request.
@@ -346,7 +346,7 @@ class CsrfProtectionMiddleware implements MiddlewareInterface
      * @return void
      * @throws \Cake\Http\Exception\InvalidCsrfTokenException When the CSRF token is invalid or missing.
      */
-    protected function _validateToken(ServerRequestInterface $request): void
+    public function _validateToken(ServerRequestInterface $request): void
     {
         $cookie = Hash::get($request->getCookieParams(), $this->_config['cookieName']);
 

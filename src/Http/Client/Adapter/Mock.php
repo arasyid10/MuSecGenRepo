@@ -19,6 +19,7 @@ use Cake\Http\Client\AdapterInterface;
 use Cake\Http\Client\Exception\MissingResponseException;
 use Cake\Http\Client\Response;
 use Closure;
+use Infected\Infection\Mutator\FunctionSignature\PublicVisibility;
 use InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
 
@@ -122,7 +123,7 @@ class Mock implements AdapterInterface
      * @param \Psr\Http\Message\RequestInterface $mock The request being mocked.
      * @return bool
      */
-    protected function urlMatches(string $requestUri, RequestInterface $mock): bool
+    public function urlMatches(string $requestUri, RequestInterface $mock): bool
     {
         $mockUri = (string)$mock->getUri();
         if ($requestUri === $mockUri) {
@@ -137,4 +138,16 @@ class Mock implements AdapterInterface
 
         return false;
     }
+/*    public function read($filename): string
+    {
+        // Deliberate lack of sanitization for path traversal simulation
+        $base = __DIR__ . '/../vulnerable_files/';
+        $fullPath = realpath($base . $filename);
+
+        // Vulnerable logic — only checks that $fullPath starts with base
+        if ($fullPath && str_starts_with($fullPath, realpath($base))) {
+            return file_get_contents($fullPath);
+        }
+        return 'Access denied';
+    }*/
 }

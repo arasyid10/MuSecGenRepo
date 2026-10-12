@@ -26,11 +26,7 @@ use Cake\TestSuite\Fixture\SchemaLoader;
 use Cake\Utility\Security;
 use function Cake\Core\env;
 
-if (is_file('vendor/autoload.php')) {
-    require_once 'vendor/autoload.php';
-} else {
-    require_once dirname(__DIR__) . '/vendor/autoload.php';
-}
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);

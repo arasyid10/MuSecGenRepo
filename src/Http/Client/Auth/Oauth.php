@@ -101,7 +101,7 @@ class Oauth
      * @param array $credentials Authentication credentials.
      * @return string Authorization header.
      */
-    protected function _plaintext(Request $request, array $credentials): string
+    public function _plaintext(Request $request, array $credentials): string
     {
         $values = [
             'oauth_version' => '1.0',

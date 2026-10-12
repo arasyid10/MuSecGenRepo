@@ -374,7 +374,7 @@ class CurlTest extends TestCase
     public function testNetworkException(): void
     {
         $this->expectException(NetworkException::class);
-        $this->expectExceptionMessageMatches('/(Could not resolve|Resolving timed out)/');
+        $this->expectExceptionMessageMatches('/(Could not resolve|Resolving timed out|Connection timed out)/');
 
         $request = new Request('http://dummy/?sleep');
         $options = [

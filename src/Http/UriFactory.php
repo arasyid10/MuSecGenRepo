@@ -71,7 +71,7 @@ class UriFactory implements UriFactoryInterface
      * @param \Psr\Http\Message\UriInterface $uri The uri to update.
      * @return \Psr\Http\Message\UriInterface
      */
-    protected static function updatePath(string $base, UriInterface $uri): UriInterface
+    public static function updatePath(string $base, UriInterface $uri): UriInterface
     {
         $path = $uri->getPath();
         if ($base !== '' && str_starts_with($path, $base)) {

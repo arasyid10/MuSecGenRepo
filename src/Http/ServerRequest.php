@@ -321,7 +321,7 @@ class ServerRequest implements ServerRequestInterface
      * @param array<string, mixed> $config Config array.
      * @return array<string, mixed> Update config.
      */
-    protected function processUrlOption(array $config): array
+    public function processUrlOption(array $config): array
     {
         if (!str_starts_with($config['url'], '/')) {
             $config['url'] = '/' . $config['url'];

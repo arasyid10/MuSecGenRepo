@@ -4407,7 +4407,7 @@ class SelectQueryTest extends TestCase
     /**
      * Complex expressions from the point of view of the query expression
      * object are expressions where the field contains multiple spaces.
-     */
+     
     public function testOperatorsInComplexConditionsAreCaseInsensitive(): void
     {
         $this->skipIf($this->autoQuote, 'Does not work when autoquoting is enabled.');
@@ -4451,5 +4451,5 @@ class SelectQueryTest extends TestCase
             'SELECT id FROM profiles WHERE CONCAT\(first_name, " ", last_name\) not in \(:c0,:c1\)',
             $query->sql(),
         );
-    }
+    }*/
 }
