@@ -52,6 +52,105 @@ Assuming you have PHPUnit installed (`composer install`), you can run the tests 
    a non-SQLite datasource.
 3. Run `vendor/bin/phpunit`.
 
+## Custom Mutators and Infection
+
+This repository contains custom mutation operators under `src/Mutator`. These classes are used together with
+[Infection](https://infection.github.io/) to generate faulty variants of the code and confirm whether the existing
+PHPUnit tests are able to detect the security regressions.
+
+### How a mutator is structured
+
+Each mutator is a PHP class that implements `Infection\Mutator\Mutator` and typically lives under a namespace such as
+`Cake\Mutator` or `Cake\Mutator\Security`. A minimal example looks like this:
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace Cake\Mutator;
+
+use Infection\Mutator\Definition;
+use Infection\Mutator\Mutator;
+use PhpParser\Node;
+
+final class StrposToStrContainsMutator implements Mutator
+{
+    public function canMutate(Node $node): bool
+    {
+        // detect strpos(...) calls
+    }
+
+    public function mutate(Node $node): iterable
+    {
+        // return a mutated AST node
+        yield new \PhpParser\Node\Expr\FuncCall(new \PhpParser\Node\Name('str_contains'), $args);
+    }
+
+    public static function getDefinition(): Definition
+    {
+        return new Definition(
+            'Replace strpos() with str_contains().',
+            \Infection\Mutator\MutatorCategory::ORTHOGONAL_REPLACEMENT,
+        );
+    }
+
+    public function getName(): string
+    {
+        return self::class;
+    }
+}
+```
+
+The actual mutators in this project follow that pattern. For example, `src/Mutator/StrposToStrContainsMutator.php`
+replaces `strpos($haystack, $needle)` with `str_contains($haystack, $needle)`, while the classes in
+`src/Mutator/Security` target path validation and cryptographic edge cases.
+
+### Registering mutators in Infection
+
+The project’s `infection.json5` file enables custom mutators explicitly under the `mutators` section. A custom mutator is
+activated by adding its fully-qualified class name and setting it to `true`:
+
+```json5
+{
+  "mutators": {
+    "@default": false,
+    "Cake\\Mutator\\StrposToStrContainsMutator": true,
+    "Cake\\Mutator\\Security\\ExAbsolutePathCheckingMutator": true
+  }
+}
+```
+
+The repository also excludes the mutator definitions themselves from analysis with:
+
+```json5
+"source": {
+  "directories": ["src/Http"],
+  "excludes": ["Mutator"]
+}
+```
+
+This keeps Infection focused on the application code while still allowing the custom mutation rules to be executed.
+
+### Running Infection
+
+After installing dependencies, run the mutation tests from the project root:
+
+```bash
+composer install
+vendor/bin/infection --config=infection.json5 --threads=8 --show-mutations
+```
+
+On Windows, the equivalent is often:
+
+```powershell
+composer install
+.\vendor\bin\infection.bat --config=infection.json5 --threads=8 --show-mutations
+```
+
+For this project, the config already points to the project PHP unit setup and the `HttpOnly` testsuite, so the most
+common workflow is to execute Infection directly with `infection.json5` and inspect the generated `infection.html`,
+`infection.log`, and `summary.log` files after the run.
+
 ## Learn More
 
 * [CakePHP](https://cakephp.org) - The home of the CakePHP project.
