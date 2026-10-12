@@ -1,0 +1,79 @@
+##Mutation operators that generate survived mutants.
+#CSRF MUTATION OPERATOR
+- HTML Element Operator
+	Intent: Ensure the token lives in a real <input> element.
+	Mutation effect: Replace <input …> with one of: <label>, <select>, <button>, <textarea>, <fieldset>.
+	Required invariants & oracles:
+		Must contain exactly one <input … type="hidden" … name="csrf" …>.
+		Fail if the element is any non-<input> tag.
+- HTML Attribute Type Operator
+	Intent: Enforce type="hidden".
+	Mutation effect: type="hidden" → one of: text, password, checkbox, radio, file, submit, reset, button, number, date, email, url.
+	Required invariants & oracles:
+		Positive: match <input … type="hidden" …>.
+		Negative: must not match any of the 12 alternative types.
+- HTML Attribute Name Operator
+	Intent: Enforce the approved parameter name the backend reads.
+	Mutation effect: name="…" → common variants like csrf-token, token, xsrf-token, token-csrf (extensible).
+	Required invariants & oracles:
+		Positive: name="csrf" (or your approved list).
+		Negative: reject trivial/alternative names listed above.
+- HTML Value Operator
+	Intent: Enforce token entropy/format.
+	Mutation effect: Replace value="…" with predictable tokens (configurable weak pool; ~100 variants).
+	Required invariants & oracles:
+		On the hidden + csrf input, extract value and assert /^[0-9a-f]{64}$/i.
+		Negative: value not in the weak list; not derived from cookies like $_COOKIE['PHPSESSID'].
+- ExHTML Input Operator
+	Intent: Detect when the hidden token field is missing.
+	Mutation effect: Delete any string containing <input type="hidden" …> (field removed; output may be empty).
+	Required invariants & oracles:
+		Rendered HTML is not empty.
+		Must contain exactly one <input type="hidden" name="csrf" …>.	
+- Random Bytes Operator
+	Intent: Ensure the token generator uses a cryptographically secure RNG and preserves the expected token format/length.
+	Mutation effect: Replace the secure source with alternatives, e.g.:
+		random_bytes(N) → openssl_random_pseudo_bytes(N)
+		random_bytes(N) → random_int(…)
+		random_bytes(N) → rand()
+	Required invariants & oracles (tests must enforce):
+1.	Format/length: The rendered token is exactly 64 hex chars (or 2*N when N is parameterized).
+	Fails if implementation switches to integer-based RNG (random_int/rand) and formatting changes/shortens.
+2.	Uniqueness: Generate ≥128 tokens in one run; no duplicates.
+	In practice, rand()/weak concatenations are more likely to collide or shorten entropy.
+3.	Non-triviality: Token must not match weak patterns (pure digits, short length) and not equal session/cookie values ($_COOKIE['PHPSESSID'], etc.).
+4.	(Optional, if using openssl_random_pseudo_bytes) If your API tracks $crypto_strong, assert it is true; otherwise treat non-strong as failure.
+
+- HMAC Algorithm Operator
+	Intent: Ensure the HMAC algorithm is exactly the project’s approved one (e.g., SHA-256) and cannot be silently downgraded.
+	Mutation effect: Change the first argument of hash_hmac($algo, $data, $key) to one of:
+		"Md5", "SHA-1", "SHA-256", "SHA-512", "Whirlpool", "RIPEMD-160".
+	Required invariants & oracles (tests must enforce):
+1.	Known-answer test: For fixed key and message, the MAC must equal hash_hmac('sha256', $message, $key) (or your chosen algo).
+	Any mutated algo produces a different digest.
+2.	Length check: Hexdigest length matches the algorithm (e.g., 64 for SHA-256).
+	Catches MD5 (32), SHA-1/RIPEMD-160 (40), SHA-512/Whirlpool (128).
+3.	Case-insensitivity tolerance: Names may vary in case; your assertion should compare the result, not the literal algo string.
+
+-	Equality Operator
+	Intent: Ensure token comparison is constant-time and boolean-valued; reject unsafe or semantically different comparators.
+	Mutation effect: Replace the comparison among:
+		hash_equals($expected, $submitted)
+		$expected === $submitted
+		$expected == $submitted
+		strcmp($expected, $submitted)
+		strcasecmp($expected, $submitted)
+		strcoll($expected, $submitted)
+		levenshtein($expected, $submitted)
+	Required invariants & oracles (tests must enforce):
+1.	Boolean type: Result of validation is boolean.
+	Kills strcmp/strcasecmp/strcoll/levenshtein (which return int).
+2.	Exact, case-sensitive match:
+	validate($token) with the exact token returns true.
+	validate(strtoupper($token)) returns false.
+	Kills strcasecmp (case-insensitive).
+3.	Length-sensitive:
+	validate($token.'x') returns false (different length must not pass).
+	Catches loose == surprises and any normalizations.
+4.	Constant-time contract (semantic): Prefer asserting the function used is hash_equals indirectly via behavior: boolean type + strict equality on several crafted near-miss cases (same prefix, different suffix; same length vs different length; case difference).
+	These combinations distinguish hash_equals from other comparators without depending on timing measurements.

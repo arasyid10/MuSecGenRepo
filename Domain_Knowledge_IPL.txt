@@ -1,0 +1,85 @@
+##Mutation operators that generate survived mutants.
+#IPL MUTATION OPERATOR
+- Absolute Path Operator
+	Intent:
+	Ensure canonical absolute resolution is performed before any string checks.
+	Mutation effect:
+	Remove/replace normalization calls:
+		delete realpath(), or replace with basename(), dirname(), pathinfo().
+	Required invariants & oracles (tests must enforce):
+	•Canonicalize-first: decision must use norm = realpath(input) (or equivalent), not raw input.
+	•Inside-base check: with base = realpath(BASE_PATH), assert inside(n)= strncasecmp(norm, base, len(base))==0 and boundary check (norm==base || norm[len(base)]===DIR_SEP).
+	•Counterexamples: payloads that only differ by traversal (.., encoded %2e, %2f, %5c, double-encoded) must be denied even if basename/dirname/pathinfo would pass.
+	•Failure on non-existent: when target doesn’t exist, realpath-based flow returns false/deny; tests must demand that behavior.
+
+- Path Payload Operator
+	Intent:
+	Enforce scope & normalization: inside paths allowed; outside/disallowed/traversal denied.
+	Mutation effect:
+	Replace input path with curated payloads:
+	•inside: YOUR_PATH_PROJECT
+	•outside via traversal: OUTSIDE_PATH, DISALLOWED_PATH
+	•(optionally) encoded & double-encoded variants, mixed / and \.
+	Required invariants & oracles:
+	•Canonicalize-first (norm = realpath(decode(input))).
+	•Allow/deny: inside-existing → allow; outside/disallowed (including traversal/encoded) → deny.
+	•Deterministic classes: all variants of the same class (inside/outside/traversal/encoded) yield consistent decisions.
+	•Platform detail: Windows prefix match is case-insensitive + boundary safe.
+
+- Find Path Operator
+	Intent:
+	Verifying a function designed to ensure that the provided path is constrained within the defined base path. Ensure path comparison logic is correct, sensitive to case/length/boundary, and tied to canonical paths, not fragile string hacks.
+	Mutation effect:
+	Change string checks and outcomes:
+	•strpos() → stripos(), str_contains(), str_starts_with(), str_ends_with(), strrpos(), strstr(), strpbrk().
+	•Replace 2nd arg (needle/base) with constants like "C:\\" or "D:\\".
+	•Return constants (return 0;, return true;).
+	Required invariants & oracles:
+	•Compare on canonical paths only (see operator #1).
+	•Boundary-correct prefix rule (see operator #1).
+	•Type/semantics: If API should return bool, assert assertIsBool; if should return int/false like strpos, assert exact type/value (0 vs false).
+	•Two-sided cases: provide inside (must pass) and outside (must fail) so constant returns or wrong needle ("C:\\", "D:\\") are caught.
+	•Case sensitivity: if policy requires case-sensitive checks, include a case-variant input that must fail.
+
+- Existance Absolute Path Checking Operator
+	Intent:
+	Guard must stop processing when canonicalization fails.
+	Mutation effect:
+	Remove:
+		if (!$normalizedPath) { return false; }
+	Required invariants & oracles:
+	•For non-existent/unresolvable input, function must return false/deny (or throw) before any further checks.
+	•Provide at least one non-existent path payload to ensure the guard is required.
+
+- Existance Find Path Checking Operator
+	Intent:
+	Ensure the inside-base check is enforced before proceeding.
+	Mutation effect:
+	Remove:
+		if (findPath(...) !== 0) { return false; }
+	Required invariants & oracles:
+	•With an outside/traversal payload, the function must deny; if guard is removed, it would allow → test must fail.
+	•Keep a paired inside case that must allow to defeat constant outcomes.
+
+- Existance Permission Checking Operator
+	Intent:
+	Enforce authorization prior to access.
+	Mutation effect:
+	Remove:
+		if (!userHasPermission(...)) { return false; }
+	Required invariants & oracles:
+	•With no-permission context/mock, operation must deny.
+	•With permission granted, operation must allow.
+	•Tests must include both states so a removed guard (always allow) is caught.
+ 
+- Existance and Readable File Checking Operator
+	Intent:
+	Require file existence & readability checks to gate access.
+	Mutation effect:
+	Replace:
+		if (file_exists($p) && is_readable($p)) { return true; } else { return false; }
+		with return true; (or delete the guard).
+	Required invariants & oracles:
+	•Existing & readable file → true/allow.
+	•Non-existent or unreadable file → false/deny.
+	•Include both fixtures so removing the guard is always detected.
