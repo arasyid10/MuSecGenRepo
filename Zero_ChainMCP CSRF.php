@@ -947,21 +947,60 @@ Escaped mutants:
              }
 
 ##Instruction 
--Generate PHP security test cases explicitly designed to "kill" the 35 escaped mutants 
-listed under "Escaped mutants," thereby improving test coverage and fault detection capability.
-- When mutants survive due to missing test cases, additional test cases should be developed to ensure that all survived mutants are killed.
-- Remove all comments, leave just the test case code
+Test case generation is prioritized based on two criteria: 
+- first, by selecting mutation operators with the highest survival rate; 
+- second, if only a single mutation operator is under consideration, by focusing on surviving mutants that are 
+  targeted by the largest number of existing test cases. 
+- This ensures that new tests are generated for mutants that are hardest to kill and most likely to improve overall test suite effectiveness.
+- When multiple mutations occur in one statement (e.g., realpath() is changed and strpos() is used), 
+categorize based on the core logic function being mutated. For example, realpath() → dirname() is an Absolute Path Operator,
+ even if wrapped in strpos().
 
-## Chain BERIKUTNYA setelah dijalankan
- your test case still remains 18 survived mutant, 
- do deep analysis to create more robust test case to kill this 18 survived mutant 
- "Escaped mutants: ================
+##Output format.
+- Generate a prioritized list of mutation operators for test case generation, sorted in descending 
+  order by the number of surviving mutants they produce. 
+- In the case where only a single mutation operator is used, output a list of prioritize test cases based on 
+  how many surviving mutants each test case from highest to lowest.
+
+ ##Next Chain 
+- Conduct a thorough review to ensure that all survived mutants listed under ##Survived Mutant Code 
+  have been accurately mapped to the mutation operators specified in ##Mutation Operators That Generate Survived Mutants. 
+- Compare functions with identical names between ##Survived Mutant Code and ##Functional Security Function sections, 
+  and verify that all occurring mutations are documented in the ##Mutation operators that generate survived mutants rules. 
+- If Any mutation or any survived mutant that does not match the specified rules include it in the final line of the 
+  prioritization list under the label 'Undefined MO'. 
+
+##Last Chain
+- Conduct once more deep and detail a thorough review to ensure that all survived mutants listed under ##Survived Mutant Code 
+  have been accurately mapped to the mutation operators specified in "##Mutation Operators That Generate Survived Mutants." 
+- Verify that all survived mutants listed in the "##Survived Mutant Code" do not mention other mutation operator except listed in the "##Survived Mutant Code"
+  section have been properly mapped and that their total count corresponds to the reported results.
+- If any survived mutant does not fall under the defined mutation operators, include it in the final line of the prioritization 
+  list under the label 'Undefined MO'.
+- Show the final result sorted in descending order by the number of surviving mutants they produce.
+
+##Security Test Case Generation 
+##Instructions
+-	Based on the previously obtained mutant prioritization ranking, generate PHPUnit test cases incrementally 
+    beginning with mutants produced by the top-ranked mutation operators and proceeding to those with lower ranks. 
+-	Ensuring that every defined survived mutant are eventually covered and killed by the generated test cases
+-	The test should be syntactically valid, use proper assertion methods to solve the problem.
+-	If there are any issues in the source code that require improvement to enhance software security, please 
+	provide comprehensive source code recommendations.
+-	Don’t create any files or folders to make the test case succeed
+-	Remove test cases or assertions that are either functionally redundant or semantically/syntactically 
+	similar to previously generated tests,as they do not contribute meaningfully to fault detection capability.
+
+##Output format.
+-	Provide the test case in PHPUnit format with clear comments and proper function naming.
+-	Logical Justification for Survived Mutant Based on Uncovered Path
+-	Remove all comments, leave just the test case code
 
 chain 2
 You still remaining 11 survived mutants as follows:
 do a deep analysis to create test cases designed to kill these 5 surviving mutants above
 
 
-## Chain BERIKUTNYA
+## Next Chain
 - Select the test cases that have been generated above, so that there are not too many, ensure all survived mutants listed under ##Escaped mutants  
   are killed, and rewrite the final test cases permutation operator.
