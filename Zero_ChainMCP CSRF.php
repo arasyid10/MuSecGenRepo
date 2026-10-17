@@ -997,8 +997,8 @@ categorize based on the core logic function being mutated. For example, realpath
 -	Remove all comments, leave just the test case code
 
 chain 2
-You still remaining 11 survived mutants as follows:
-do a deep analysis to create test cases designed to kill these 5 surviving mutants above
+You still remaining ... survived mutants as follows:.....
+do a deep analysis to create test cases designed to kill these ... surviving mutants above
 
 
 ## Next Chain
